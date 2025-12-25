@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - Rutika's Bakery</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-logo">RB</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="menu.html" class="active">Menu</a></li>
+            <li><a href="account.html">My Account</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+        <div class="nav-icons">
+            <a href="cart.html" class="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="page-header" style="text-align:center; padding: 40px 20px; background-color: #fff8e1;">
+        <h1>Our Fresh Menu</h1>
+        <p style="color: #666; margin-top: 10px;">Handcrafted with love, served fresh daily.</p>
+    </div>
+
+    <div style="text-align:center; margin: 20px 0;">
+    <input type="text" id="search-input" placeholder="Search for cakes, pastries..." 
+           style="padding: 12px; width: 100%; max-width: 400px; border: 2px solid var(--primary-color); border-radius: 25px; font-size: 1rem; outline:none;">
+</div>
+    <section class="menu-section">
+        <h2 class="section-title">Signature Cakes</h2>
+        <div class="product-grid">
+            
+            <div class="product-card" 
+                 data-id="cake1" 
+                 data-name="Belgian Chocolate Truffle" 
+                 data-price="35.00" 
+                 data-ing="Dark Belgian chocolate, heavy cream, cocoa powder, eggs, flour" 
+                 data-img="https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Chocolate Cake">
+                <div class="product-info">
+                    <h3>Belgian Chocolate Truffle</h3>
+                    <p class="price">₹350.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+            <div class="product-card" 
+                 data-id="cake2" 
+                 data-name="Classic Red Velvet" 
+                 data-price="40.00" 
+                 data-ing="Cocoa, buttermilk, vinegar, cream cheese frosting, red beet color" 
+                 data-img="https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                <img src="https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Red Velvet">
+                <div class="product-info">
+                    <h3>Classic Red Velvet</h3>
+                    <p class="price">₹400.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+            <div class="product-card" 
+                 data-id="cake3" 
+                 data-name="New York Cheesecake" 
+                 data-price="45.00" 
+                 data-ing="Graham cracker crust, cream cheese, sugar, vanilla extract, sour cream" 
+                 data-img="https://images.unsplash.com/photo-1533134242443-d4fd215305ad?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                <img src="https://images.unsplash.com/photo-1533134242443-d4fd215305ad?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Cheesecake">
+                <div class="product-info">
+                    <h3>New York Cheesecake</h3>
+                    <p class="price">₹450.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="menu-section" style="background-color: #fffaf0;">
+        <h2 class="section-title">Fresh from the Oven</h2>
+        <div class="product-grid">
+
+            <div class="product-card" 
+                 data-id="pastry1" 
+                 data-name="Golden Butter Croissant" 
+                 data-price="5.00" 
+                 data-ing="French butter, flour, yeast, milk, sugar, salt" 
+                 data-img="https://images.unsplash.com/photo-1555507036-ab1f4038808a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Croissant">
+                <div class="product-info">
+                    <h3>Butter Croissant</h3>
+                    <p class="price">₹120.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+            <div class="product-card" 
+                 data-id="pastry2" 
+                 data-name="Blueberry Burst Muffin" 
+                 data-price="4.50" 
+                 data-ing="Fresh blueberries, flour, butter, sugar, baking powder" 
+                 data-img="images\muffins.jpg">
+                <img src="images\muffins.jpg" alt="Muffin">
+                <div class="product-info">
+                    <h3>Blueberry Muffin</h3>
+                    <p class="price">₹90.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+            <div class="product-card" 
+                 data-id="pastry3" 
+                 data-name="Assorted Glazed Donuts" 
+                 data-price="8.00" 
+                 data-ing="Flour, sugar glaze, sprinkles, chocolate sauce, yeast" 
+                 data-img="images\donut.jpeg">
+                <img src="images\donut.jpeg" alt="Donuts">
+                <div class="product-info">
+                    <h3>Assorted Glazed Donuts</h3>
+                    <p class="price">₹150.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="menu-section">
+        <h2 class="section-title">Cookies & Treats</h2>
+        <div class="product-grid">
+
+            <div class="product-card" 
+                 data-id="treat1" 
+                 data-name="Parisian Macaron Box" 
+                 data-price="20.00" 
+                 data-ing="Almond flour, egg whites, sugar, fruit ganache fillings" 
+                 data-img="https://images.unsplash.com/photo-1569864358642-9d1684040f43?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                <img src="https://images.unsplash.com/photo-1569864358642-9d1684040f43?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Macarons">
+                <div class="product-info">
+                    <h3>Parisian Macaron Box</h3>
+                    <p class="price">₹550.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+            <div class="product-card" 
+                 data-id="treat2" 
+                 data-name="Choco-Chip Cookie Jar" 
+                 data-price="12.00" 
+                 data-ing="Brown sugar, semi-sweet chocolate chips, butter, vanilla" 
+                 data-img="images\choco-cookie jar.jpeg">
+                <img src="images\choco-cookie jar.jpeg" alt="Cookies">
+                <div class="product-info">
+                    <h3>Choco-Chip Cookie Jar</h3>
+                    <p class="price">₹250.00</p>
+                    <button class="btn-view-details">View Details</button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <img id="modal-img" src="" alt="">
+                <div class="modal-details">
+                    <h2 id="modal-title"></h2>
+                    <p class="highlight-price" id="modal-price"></p>
+                    <h4>Ingredients:</h4>
+                    <p id="modal-ingredients"></p>
+                    <div class="quantity-selector">
+                        <label>Quantity:</label>
+                        <input type="number" id="quantity" min="1" value="1">
+                    </div>
+                    <button id="add-to-cart-btn" class="btn-primary">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    // SEARCH LOGIC
+document.getElementById('search-input').addEventListener('keyup', function(e) {
+    const searchValue = e.target.value.toLowerCase();
+    const products = document.querySelectorAll('.product-card');
+
+    products.forEach(product => {
+        const name = product.getAttribute('data-name').toLowerCase();
+        
+        if (name.includes(searchValue)) {
+            product.style.display = 'block'; // Show
+        } else {
+            product.style.display = 'none'; // Hide
+        }
+    });
+});
+</script>
+    <script src="js/main.js"></script>
+</body>
+</html>

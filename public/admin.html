@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Rutika's Bakery</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-container { padding: 40px; max-width: 1200px; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--primary-color); color: white; }
+        
+        .btn-action { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; margin-right: 5px; }
+        .btn-accept { background-color: #28a745; }
+        .btn-decline { background-color: #dc3545; }
+        
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 0.85rem; font-weight: bold; }
+        .status-Pending { background-color: #fff3cd; color: #856404; }
+        .status-Accepted { background-color: #d4edda; color: #155724; }
+        .status-Declined { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-logo">Admin Panel</div>
+        <ul class="nav-links">
+            <li><a href="index.html">View Site</a></li>
+            <li><button onclick="logout()" style="background:red; padding:5px 10px; color:white; border:none;">Logout</button></li>
+        </ul>
+    </nav>
+
+    <div class="admin-container">
+        <h1>Order Management</h1>
+        <br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="orders-table">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        const DOMAIN = 'http://localhost:3000';
+
+        // 1. Security Check
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.isAdmin) {
+            alert("Admins only!");
+            window.location.href = 'login.html';
+        }
+
+        // 2. Load Orders Function
+        async function loadOrders() {
+            const table = document.getElementById('orders-table');
+            table.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+
+            try {
+                const res = await fetch(`${DOMAIN}/api/orders?isAdmin=true`);
+                const orders = await res.json();
+                
+                table.innerHTML = ''; // Clear loading text
+
+                if(orders.length === 0) {
+                    table.innerHTML = '<tr><td colspan="6">No orders found yet.</td></tr>';
+                    return;
+                }
+
+                // Show newest orders first
+                orders.reverse().forEach(order => {
+                    // Create Item Summary
+                    let itemsHtml = order.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+
+                    // Define Buttons HTML based on status
+                    let actionButtons = '';
+                    if (order.status === 'Pending') {
+                        actionButtons = `
+                            <button class="btn-action btn-accept" onclick="updateStatus('${order.id}', 'Accepted')">Accept</button>
+                            <button class="btn-action btn-decline" onclick="updateStatus('${order.id}', 'Declined')">Decline</button>
+                        `;
+                    } else {
+                        actionButtons = `<span style="color:#666;">Completed</span>`;
+                    }
+
+                    let row = `
+                        <tr>
+                            <td>#${order.id}</td>
+                            <td>${order.email}<br><small>${order.address}</small></td>
+                            <td>${itemsHtml}</td>
+                            <td>₹${order.total}</td>
+                            <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+                            <td>${actionButtons}</td>
+                        </tr>
+                    `;
+                    table.innerHTML += row;
+                });
+
+            } catch (err) {
+                console.error(err);
+                table.innerHTML = '<tr><td colspan="6">Error loading data. Is server running?</td></tr>';
+            }
+        }
+
+        // 3. Update Status Function
+        async function updateStatus(orderId, newStatus) {
+            if(!confirm(`Mark Order ${orderId} as ${newStatus}?`)) return;
+
+            try {
+                const res = await fetch(`${DOMAIN}/api/orders/${orderId}`, {
+                    method: 'PUT', // This matches our new server route
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const data = await res.json();
+                if(data.success) {
+                    loadOrders(); // Refresh table immediately
+                } else {
+                    alert("Failed to update status");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Server connection error");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        // Run on load
+        loadOrders();
+    </script>
+</body>
+</html>

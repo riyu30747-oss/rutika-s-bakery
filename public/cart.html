@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Cart - Rutika's Bakery</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .cart-container { max-width: 900px; margin: 2rem auto; padding: 20px; background: white; border-radius: 10px; box-shadow: var(--shadow); }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        .checkout-form { display: grid; gap: 15px; max-width: 500px; margin-top: 2rem; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .total-box { text-align: right; font-size: 1.5rem; font-weight: bold; color: var(--accent-color); }
+    </style>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<body>
+    
+    <nav class="navbar">
+        <div class="nav-logo">RB</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="cart.html" class="active">Cart</a></li>
+        </ul>
+    </nav>
+
+    <div class="cart-container">
+        <h2>Your Shopping Cart</h2>
+        <table id="cart-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Action</th> </tr>
+                </tr>
+            </thead>
+            <tbody id="cart-body">
+                </tbody>
+        </table>
+
+        <div class="total-box">
+            Grand Total: <span id="grand-total">$0.00</span>
+        </div>
+
+        <hr>
+
+        <h3>Checkout Details</h3>
+        <div class="checkout-form">
+            <div class="form-group">
+                <label>Delivery Address</label>
+                <input type="text" id="address" placeholder="Enter full address">
+            </div>
+            <div class="form-group">
+                <label>Payment Method</label>
+                <select id="payment-method">
+                    <option value="cod">Cash on Delivery</option>
+                    <option value="online">Online Payment (Card/UPI)</option>
+                </select>
+            </div>
+            <button id="checkout-btn" type="button" class="btn-primary" onclick="debugCheckout()">Confirm Order</button>
+        </div>
+    </div>
+
+    <div id="success-overlay" class="overlay hidden">
+        <div class="success-box">
+             <i class="fa fa-check-circle" style="color:green; font-size:3rem;"></i>
+             <h2>Order Placed Successfully!</h2>
+             <p>It will be served to you soon.</p>
+             <button class="btn-primary" onclick="window.location.href='index.html'">OK</button>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+   <!-- <script src="js/main.js"></script> -->
+
+<!-- <script src="js/main.js"></script> -->
+
+<script src="js/main.js"></script>
+<script>
+    console.log("Cart Page Loaded"); // Check console for this
+
+    function loadCart() {
+        const cartBody = document.getElementById('cart-body');
+        const grandTotalEl = document.getElementById('grand-total');
+
+        let cart = JSON.parse(localStorage.getItem('rutikasCart')) || [];
+
+        cartBody.innerHTML = '';
+        let grandTotal = 0;
+
+        if (cart.length === 0) {
+            cartBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Your cart is empty!</td></tr>';
+            grandTotalEl.innerText = "₹0.00";
+            return;
+        }
+
+        cart.forEach((item, index) => {
+            let rowTotal = item.price * item.quantity;
+            grandTotal += rowTotal;
+            let imgSrc = item.img ? item.img : 'https://via.placeholder.com/50';
+
+            let row = `
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center;">
+                            <img src="${imgSrc}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; margin-right:10px;">
+                            <span style="font-weight:bold;">${item.name}</span>
+                        </div>
+                    </td>
+                    <td>₹${item.price}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${rowTotal.toFixed(2)}</td>
+                    <td>
+                        <button onclick="removeFromCart(${index})" 
+                                style="background-color: #ff4d4d; 
+                                       color: white; 
+                                       border: none; 
+                                       padding: 10px 20px; 
+                                       font-size: 1rem; 
+                                       font-weight: bold; 
+                                       border-radius: 5px; 
+                                       cursor: pointer;
+                                       transition: background 0.3s;">
+                            DELETE
+                        </button>
+                    </td>
+                </tr>
+            `;
+            cartBody.innerHTML += row;
+        });
+
+        grandTotalEl.innerText = `₹${grandTotal.toFixed(2)}`;
+    }
+    // --- 2. REMOVE ITEM FUNCTION ---
+    function removeFromCart(index) {
+        // 1. Get current cart
+        let cart = JSON.parse(localStorage.getItem('rutikasCart')) || [];
+        
+        // 2. Remove item at the specific index
+        cart.splice(index, 1);
+        
+        // 3. Save back to storage
+        localStorage.setItem('rutikasCart', JSON.stringify(cart));
+        
+        // 4. Update the Navbar Count (from main.js)
+        if(typeof updateCartCountUI === 'function') {
+            updateCartCountUI(); 
+        }
+        
+        // 5. Refresh the Table
+        loadCart();
+        
+        // Optional: Show a quick toast/alert
+        // alert("Item removed");
+    }
+
+    // --- 3. CHECKOUT LOGIC (Debug Version) ---
+    async function debugCheckout() {
+        const address = document.getElementById('address').value;
+        const paymentMethod = document.getElementById('payment-method').value;
+        const btn = document.getElementById('checkout-btn');
+
+        // 1. Validation
+        if (!address) { alert("Please enter delivery address"); return; }
+        const cart = JSON.parse(localStorage.getItem('rutikasCart')) || [];
+        if (cart.length === 0) { alert("Cart is empty!"); return; }
+
+        // 2. Get User Info (or use "Guest")
+        const user = JSON.parse(localStorage.getItem('user')) || { email: 'guest@example.com' };
+
+        // 3. SAVE ORDER TO BACKEND
+        // We do this BEFORE payment so we have a record
+        const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        try {
+            // Save the order to our database
+            await fetch('http://localhost:3000/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: user.email,
+                    items: cart,
+                    total: totalAmount,
+                    address: address,
+                    method: paymentMethod
+                })
+            });
+        } catch (err) {
+            console.error("Could not save order history:", err);
+            // We continue anyway so user can still buy
+        }
+
+        // 4. Process Payment
+        if (paymentMethod === 'cod') {
+            window.location.href = 'success.html';
+        } 
+        else if (paymentMethod === 'online') {
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+            const stripe = Stripe(stripeKey);
+
+            try {
+                const response = await fetch('http://localhost:3000/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cartItems: cart, customerAddress: address }),
+                });
+                const session = await response.json();
+                if (session.error) { alert(session.error); btn.disabled = false; return; }
+                
+                await stripe.redirectToCheckout({ sessionId: session.id });
+            } catch (error) {
+                console.error(error);
+                alert("Connection Error");
+                btn.disabled = false;
+            }
+        }
+    }
+
+    // RUN THE FUNCTION
+    loadCart();
+</script>
+
+</body>
+</html>

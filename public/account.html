@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - Rutika's Bakery</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo">RB</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><button onclick="logout()" style="background:red; color:white; border:none; padding:5px 10px;">Logout</button></li>
+        </ul>
+    </nav>
+
+    <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
+        <h1 id="user-greeting">Hello!</h1>
+        <hr>
+        <h2 style="margin-top:20px;">My Order History</h2>
+        
+        <div id="order-list" style="margin-top:20px;">
+            <p>Loading orders...</p>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if(!user) {
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('user-greeting').innerText = `Hello, ${user.name || user.email}!`;
+            loadUserOrders();
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        async function loadUserOrders() {
+            try {
+                // Fetch orders specifically for this email
+                const res = await fetch(`http://localhost:3000/api/orders?email=${user.email}`);
+                const orders = await res.json();
+                
+                const list = document.getElementById('order-list');
+                list.innerHTML = '';
+
+                if(orders.length === 0) {
+                    list.innerHTML = '<p>No orders yet. <a href="menu.html">Order some cake!</a></p>';
+                    return;
+                }
+
+                orders.reverse().forEach(order => {
+                    // Create a summary of items (e.g., "Chocolate Cake x 1, Cookies x 2")
+                    let itemSummary = order.items.map(i => `${i.name} x${i.quantity}`).join(', ');
+
+                    let html = `
+                        <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:15px; background:white;">
+                            <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                                <span>Order #${order.id}</span>
+                                <span style="color:var(--primary-color);">₹${order.total}</span>
+                            </div>
+                            <p style="color:#666; font-size:0.9rem;">${order.date} • ${order.status}</p>
+                            <p style="margin-top:10px;"><b>Items:</b> ${itemSummary}</p>
+                        </div>
+                    `;
+                    list.innerHTML += html;
+                });
+
+            } catch(err) {
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>

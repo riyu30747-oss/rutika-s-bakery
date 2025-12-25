@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Rutika's Bakery</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-wrapper {
+            display: flex; justify-content: center; align-items: center;
+            min-height: 80vh;
+            background: url('https://images.unsplash.com/photo-1517433670267-08bbd4be890f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;
+        }
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem; border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            width: 100%; max-width: 400px; text-align: center;
+        }
+        .login-box h2 { color: var(--accent-color); margin-bottom: 1.5rem; font-family: 'Playfair Display', serif; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+        .toggle-link { margin-top: 15px; display: block; color: var(--primary-color); cursor: pointer; text-decoration: underline; font-weight: bold; }
+        .error-msg { color: red; font-size: 0.9rem; margin-bottom: 10px; display: none; }
+        
+        /* HIDDEN FIELDS CLASS */
+        .register-only { display: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-logo">RB</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="login.html" class="active">Login</a></li>
+        </ul>
+    </nav>
+
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h2 id="form-title">Welcome Back</h2>
+            <p class="error-msg" id="error-msg">Error Message</p>
+            
+            <form id="auth-form">
+                <div class="input-group register-only">
+                    <label>Full Name</label>
+                    <input type="text" id="fullname" placeholder="Enter your name">
+                </div>
+
+                <div class="input-group register-only">
+                    <label>Phone Number</label>
+                    <input type="tel" id="phone" placeholder="Enter phone number">
+                </div>
+
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="Enter email" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width:100%;">Login</button>
+            </form>
+
+            <span class="toggle-link" onclick="toggleMode()">New? Create an Account</span>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // --- CONFIGURATION ---
+        // This tells the frontend to always talk to the Node server
+        const DOMAIN = 'http://localhost:3000'; 
+
+        // --- LOGIC FOR LOGIN/REGISTER SWITCH ---
+        let isLoginMode = true;
+        const formTitle = document.getElementById('form-title');
+        const toggleLink = document.querySelector('.toggle-link');
+        const authForm = document.getElementById('auth-form');
+        const errorMsg = document.getElementById('error-msg');
+        const submitBtn = document.querySelector('.btn-primary');
+
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            
+            // Toggle Text
+            formTitle.innerText = isLoginMode ? "Welcome Back" : "Join Rutika's Bakery";
+            toggleLink.innerText = isLoginMode ? "New? Create an Account" : "Already have an account? Login";
+            submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
+            errorMsg.style.display = 'none';
+
+            // Toggle Visibility
+            const regFields = document.querySelectorAll('.register-only');
+            regFields.forEach(field => {
+                field.style.display = isLoginMode ? 'none' : 'block';
+            });
+            
+            // Toggle Required
+            const fullnameInput = document.getElementById('fullname');
+            const phoneInput = document.getElementById('phone');
+            if(fullnameInput) fullnameInput.required = !isLoginMode;
+            if(phoneInput) phoneInput.required = !isLoginMode;
+        }
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = true; // Prevent double clicks
+            submitBtn.innerText = "Processing...";
+            
+            // Gather Data
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Handle optional fields safely
+            const nameInput = document.getElementById('fullname');
+            const phoneInput = document.getElementById('phone');
+            const name = nameInput ? nameInput.value : '';
+            const phone = phoneInput ? phoneInput.value : '';
+
+            // Determine correct URL (Login vs Register)
+            const endpoint = isLoginMode ? `${DOMAIN}/api/login` : `${DOMAIN}/api/register`;
+            
+            // Build Payload
+            const payload = { email, password };
+            if (!isLoginMode) {
+                payload.name = name;
+                payload.phone = phone;
+            }
+
+            try {
+                console.log(`Sending request to: ${endpoint}`); // Debugging
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // This line was failing before because response was empty
+                const data = await response.json(); 
+
+                if (response.ok) {
+                    // Save User Data & Token
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    alert(isLoginMode ? "Login Successful!" : "Account Created Successfully!");
+                    
+                    // Redirect
+                    if(data.user.isAdmin) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'account.html';
+                    }
+                } else {
+                    errorMsg.innerText = data.message || "Authentication Failed";
+                    errorMsg.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
+                }
+            } catch (err) {
+                console.error("Login Error:", err);
+                errorMsg.innerText = "Connection Failed. Is the server running?";
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
+            }
+        });
+    </script>
+</body>
+</html>
