@@ -74,7 +74,7 @@
     <script>
         // --- CONFIGURATION ---
         // This tells the frontend to always talk to the Node server
-        const DOMAIN = 'http://localhost:3000'; 
+        // const DOMAIN = 'http://localhost:3000'; 
 
         // --- LOGIC FOR LOGIN/REGISTER SWITCH ---
         let isLoginMode = true;
@@ -123,7 +123,7 @@
             const phone = phoneInput ? phoneInput.value : '';
 
             // Determine correct URL (Login vs Register)
-            const endpoint = isLoginMode ? `${DOMAIN}/api/login` : `${DOMAIN}/api/register`;
+            const endpoint = isLoginMode ? '/api/login' : '/api/register';
             
             // Build Payload
             const payload = { email, password };
