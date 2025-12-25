@@ -170,7 +170,9 @@
         if (cart.length === 0) { alert("Cart is empty!"); return; }
 
         // 2. Get User Info (or use "Guest")
-        const user = JSON.parse(localStorage.getItem('user')) || { email: 'guest@example.com' };
+        // OLD: const user = JSON.parse(localStorage.getItem('user'));
+// NEW:
+const user = JSON.parse(localStorage.getItem('bakeryUser')) || { email: 'guest@example.com' };
 
         // 3. SAVE ORDER TO BACKEND
         // We do this BEFORE payment so we have a record

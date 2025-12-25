@@ -50,38 +50,69 @@
         </table>
     </div>
 
-    <script>
-        // const DOMAIN = 'http://localhost:3000';
+   <script>
+        // --- 1. SMART DOMAIN SETTINGS ---
+        // This line is CRITICAL. It finds your server (Port 3000 or Live).
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const DOMAIN = isLocal ? 'http://localhost:3000' : '';
 
-        // 1. Security Check
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || !user.isAdmin) {
-            alert("Admins only!");
-            window.location.href = 'login.html';
+        console.log("Admin Panel Loaded.");
+        console.log("Target Server:", DOMAIN || "Relative Path (Live)");
+
+        // --- 2. SEPARATE ADMIN AUTHENTICATION ---
+        // We now check 'bakeryAdmin' instead of generic 'user'
+        const adminSession = JSON.parse(localStorage.getItem('bakeryAdmin'));
+        
+        if (!adminSession || !adminSession.isAdmin) {
+            console.warn("No Admin session found. Redirecting...");
+            alert("⛔ ACCESS DENIED. Please log in as Admin.");
+            window.location.href = 'admin-login.html';
+        } else {
+            console.log("✅ Admin Logged In:", adminSession.email);
         }
 
-        // 2. Load Orders Function
+        // --- 3. LOGOUT FUNCTION ---
+        function logout() {
+            if(confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem('bakeryAdmin'); // Clear only Admin data
+                window.location.href = 'admin-login.html';
+            }
+        }
+
+        // --- 4. LOAD ORDERS FUNCTION ---
         async function loadOrders() {
             const table = document.getElementById('orders-table');
-            table.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
-
+            
             try {
-                const res = await fetch(`/api/orders?isAdmin=true`);
-                const orders = await res.json();
+                const endpoint = `${DOMAIN}/api/orders?isAdmin=true`;
+                console.log("Fetching orders from:", endpoint);
+
+                const res = await fetch(endpoint);
                 
-                table.innerHTML = ''; // Clear loading text
+                // Check for server errors (like 404 or 500)
+                if (!res.ok) {
+                    throw new Error(`Server responded with status: ${res.status}`);
+                }
+
+                const orders = await res.json();
+                console.log("Orders received:", orders.length);
+
+                table.innerHTML = ''; 
 
                 if(orders.length === 0) {
-                    table.innerHTML = '<tr><td colspan="6">No orders found yet.</td></tr>';
+                    table.innerHTML = '<tr><td colspan="6" style="text-align:center;">No orders found yet. Waiting for sales!</td></tr>';
                     return;
                 }
 
                 // Show newest orders first
                 orders.reverse().forEach(order => {
-                    // Create Item Summary
-                    let itemsHtml = order.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+                    // Safe ID display (adds # if missing)
+                    const displayId = order.id.toString().startsWith('#') ? order.id : `#${order.id}`;
+                    
+                    // Create item list string
+                    let itemsHtml = order.items.map(i => `${i.name} x${i.quantity}`).join(', ');
 
-                    // Define Buttons HTML based on status
+                    // Button Logic
                     let actionButtons = '';
                     if (order.status === 'Pending') {
                         actionButtons = `
@@ -89,13 +120,17 @@
                             <button class="btn-action btn-decline" onclick="updateStatus('${order.id}', 'Declined')">Decline</button>
                         `;
                     } else {
-                        actionButtons = `<span style="color:#666;">Completed</span>`;
+                        // Shows "Completed" or "Declined" in grey
+                        actionButtons = `<span style="color:#777; font-style:italic;">${order.status}</span>`;
                     }
 
                     let row = `
                         <tr>
-                            <td>#${order.id}</td>
-                            <td>${order.email}<br><small>${order.address}</small></td>
+                            <td><strong>${displayId}</strong></td>
+                            <td>
+                                ${order.email}
+                                <br><small style="color:#666;">${order.address || 'No Address'}</small>
+                            </td>
                             <td>${itemsHtml}</td>
                             <td>₹${order.total}</td>
                             <td><span class="status-badge status-${order.status}">${order.status}</span></td>
@@ -106,40 +141,45 @@
                 });
 
             } catch (err) {
-                console.error(err);
-                table.innerHTML = '<tr><td colspan="6">Error loading data. Is server running?</td></tr>';
+                console.error("❌ LOAD ERROR:", err);
+                table.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center; padding:20px;">
+                    <strong>Error loading data.</strong><br>
+                    1. Is 'node server.js' running?<br>
+                    2. Check Console (F12) for details.<br>
+                    <small>${err.message}</small>
+                </td></tr>`;
             }
         }
 
-        // 3. Update Status Function
+        // --- 5. UPDATE STATUS FUNCTION ---
         async function updateStatus(orderId, newStatus) {
-            if(!confirm(`Mark Order ${orderId} as ${newStatus}?`)) return;
+            const cleanId = orderId.replace('#', '');
+            
+            // Visual feedback
+            const confirmMsg = newStatus === 'Accepted' ? "Accept this order?" : "Decline this order?";
+            if(!confirm(confirmMsg)) return;
 
             try {
-                const res = await fetch(`${DOMAIN}/api/orders/${orderId}`, {
-                    method: 'PUT', // This matches our new server route
+                const res = await fetch(`${DOMAIN}/api/orders/${cleanId}`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: newStatus })
                 });
 
                 const data = await res.json();
+                
                 if(data.success) {
                     loadOrders(); // Refresh table immediately
                 } else {
-                    alert("Failed to update status");
+                    alert("Failed to update status. Check server logs.");
                 }
             } catch (err) {
                 console.error(err);
-                alert("Server connection error");
+                alert("Server connection failed.");
             }
         }
 
-        function logout() {
-            localStorage.removeItem('user');
-            window.location.href = 'login.html';
-        }
-
-        // Run on load
+        // Run immediately on load
         loadOrders();
     </script>
 </body>

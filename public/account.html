@@ -27,7 +27,9 @@
     </div>
 
     <script>
-        const user = JSON.parse(localStorage.getItem('user'));
+        // OLD: const user = JSON.parse(localStorage.getItem('user'));
+// NEW:
+const user = JSON.parse(localStorage.getItem('bakeryUser'));
         
         if(!user) {
             window.location.href = 'login.html';

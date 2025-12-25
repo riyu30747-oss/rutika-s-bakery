@@ -70,13 +70,17 @@
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+   <script src="js/main.js"></script>
     <script>
-        // --- CONFIGURATION ---
-        // This tells the frontend to always talk to the Node server
-        // const DOMAIN = 'http://localhost:3000'; 
+        // --- 1. SMART DOMAIN CONFIGURATION (THE FIX) ---
+        // Checks if we are on localhost. If yes, point to Port 3000.
+        // If we are on the live internet, use relative path.
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const DOMAIN = isLocal ? 'http://localhost:3000' : '';
 
-        // --- LOGIC FOR LOGIN/REGISTER SWITCH ---
+        console.log("Current API Target:", DOMAIN); // Debugging line
+
+        // --- 2. TOGGLE LOGIC ---
         let isLoginMode = true;
         const formTitle = document.getElementById('form-title');
         const toggleLink = document.querySelector('.toggle-link');
@@ -86,84 +90,94 @@
 
         function toggleMode() {
             isLoginMode = !isLoginMode;
-            
-            // Toggle Text
             formTitle.innerText = isLoginMode ? "Welcome Back" : "Join Rutika's Bakery";
             toggleLink.innerText = isLoginMode ? "New? Create an Account" : "Already have an account? Login";
             submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
             errorMsg.style.display = 'none';
 
-            // Toggle Visibility
-            const regFields = document.querySelectorAll('.register-only');
-            regFields.forEach(field => {
+            document.querySelectorAll('.register-only').forEach(field => {
                 field.style.display = isLoginMode ? 'none' : 'block';
             });
             
-            // Toggle Required
             const fullnameInput = document.getElementById('fullname');
             const phoneInput = document.getElementById('phone');
             if(fullnameInput) fullnameInput.required = !isLoginMode;
             if(phoneInput) phoneInput.required = !isLoginMode;
         }
 
+        // --- 3. SUBMIT LOGIC ---
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.style.display = 'none';
-            submitBtn.disabled = true; // Prevent double clicks
+            submitBtn.disabled = true;
             submitBtn.innerText = "Processing...";
             
-            // Gather Data
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
-            // Handle optional fields safely
-            const nameInput = document.getElementById('fullname');
-            const phoneInput = document.getElementById('phone');
-            const name = nameInput ? nameInput.value : '';
-            const phone = phoneInput ? phoneInput.value : '';
+            const name = document.getElementById('fullname')?.value || '';
+            const phone = document.getElementById('phone')?.value || '';
 
-            // Determine correct URL (Login vs Register)
-            const endpoint = isLoginMode ? '/api/login' : '/api/register';
+            // Use the DOMAIN variable here
+            const endpoint = isLoginMode 
+                ? `${DOMAIN}/api/login` 
+                : `${DOMAIN}/api/register`;
             
-            // Build Payload
-            const payload = { email, password };
-            if (!isLoginMode) {
-                payload.name = name;
-                payload.phone = phone;
-            }
+            const payload = isLoginMode 
+                ? { email, password } 
+                : { name, phone, email, password };
 
             try {
-                console.log(`Sending request to: ${endpoint}`); // Debugging
-
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                // This line was failing before because response was empty
+                // Check if the server actually replied successfully
+                if (!response.ok) {
+                    const text = await response.text(); // Read as text first to avoid JSON crash
+                    throw new Error(text || `Server Error: ${response.status}`);
+                }
+
+                // If we get here, it is safe to parse JSON
                 const data = await response.json(); 
 
-                if (response.ok) {
-                    // Save User Data & Token
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    alert(isLoginMode ? "Login Successful!" : "Account Created Successfully!");
+                // ... (inside authForm submit) ...
+
+                if (data.success) {
+                    // CHANGE THIS LINE: Save to 'bakeryUser'
+                    localStorage.setItem('bakeryUser', JSON.stringify(data.user));
                     
-                    // Redirect
+                    alert(isLoginMode ? "Login Successful!" : "Account Created!");
+                    
+                    // Redirect Logic
                     if(data.user.isAdmin) {
-                        window.location.href = 'admin.html';
+                        // If an Admin logs in here by mistake, send them to admin login
+                        alert("Admins please use the dedicated Admin Portal.");
+                        window.location.href = 'admin-login.html';
                     } else {
                         window.location.href = 'account.html';
                     }
-                } else {
-                    errorMsg.innerText = data.message || "Authentication Failed";
-                    errorMsg.style.display = 'block';
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
                 }
+
             } catch (err) {
                 console.error("Login Error:", err);
-                errorMsg.innerText = "Connection Failed. Is the server running?";
+                
+                // Show a helpful error message to the user
+                let message = "Login Failed.";
+                try {
+                    // Try to parse the error if it's a JSON string
+                    const errObj = JSON.parse(err.message);
+                    message = errObj.message;
+                } catch(e) {
+                    message = err.message; // Use raw message
+                }
+
+                if (message.includes("Unexpected token")) {
+                    message = "Connection Error: Server not reachable (Check Port 3000)";
+                }
+
+                errorMsg.innerText = message;
                 errorMsg.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
